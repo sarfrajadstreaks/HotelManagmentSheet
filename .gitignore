@@ -1,0 +1,26 @@
+# Clasp
+.clasprc.json
+.clasp.json
+
+# Node modules (if using any local tooling)
+node_modules/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Credentials and sensitive data
+*.env
+credentials.json
+token.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*~

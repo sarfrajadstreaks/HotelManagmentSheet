@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 16px;
+      }
+      label {
+        display: block;
+        margin-top: 12px;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+      }
+      button {
+        margin-top: 16px;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Rate Update</h3>
+
+    <label>Start Date</label>
+    <input type="date" id="startDate">
+
+    <label>End Date</label>
+    <input type="date" id="endDate">
+
+    <label>Auth Token</label>
+    <input type="password" id="authToken">
+
+    <button onclick="submitForm()">Submit</button>
+
+    <script>
+      function submitForm() {
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+        const authToken = document.getElementById("authToken").value;
+
+        google.script.run
+          .withSuccessHandler(() => {
+            google.script.host.close();
+          })
+          .logRateInputs(startDate, endDate, authToken);
+      }
+    </script>
+  </body>
+</html>

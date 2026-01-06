@@ -1,0 +1,1263 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <base target="_top">
+    <style>
+        body { 
+        font-family: Arial, sans-serif; 
+        margin: 0; 
+        background: #f5f5f5;
+        }
+        
+        .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #1a73e8;
+        }
+        
+        .header h1 {
+        color: #1a73e8;
+        margin: 0;
+        }
+        
+        .booking-info {
+        background: #e8f5e8;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        }
+        
+        .info-item {
+        display: flex;
+        justify-content: space-between;
+        }
+        
+        .info-label {
+        font-weight: bold;
+        color: #333;
+        }
+        
+        .info-value {
+        color: #666;
+        }
+        
+        .form-section {
+        background: #f9f9f9;
+        padding: 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        }
+        
+        .form-section h3 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+        }
+        
+        .form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 12px;
+        }
+        
+        .form-grid.header {
+        font-weight: bold;
+        color: #333;
+        align-items: center;
+        }
+        
+        label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: bold;
+        font-size: 13px;
+        color: #555;
+        }
+        
+        input, select {
+        width: 100%;
+        padding: 8px;
+        margin: 0;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        }
+        
+        input[type="number"] {
+        text-align: right;
+        }
+        
+        .add-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        }
+        
+        .add-btn:hover {
+        background: #218838;
+        }
+        
+        .remove-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        }
+        
+        .remove-btn:hover {
+        background: #c82333;
+        }
+        
+        .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        background: white;
+        }
+        
+        .items-table th,
+        .items-table td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #ddd;
+        }
+        
+        .items-table th {
+        background: #f8f9fa;
+        font-weight: bold;
+        color: #333;
+        }
+        
+        .items-table td.number {
+        text-align: right;
+        }
+        
+        .items-table tr:nth-child(even) {
+        background: #f9f9f9;
+        }
+        
+        .items-table tr:hover {
+        background: #e8f4fd;
+        }
+        
+        .total-section {
+        background: #fff3cd;
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 20px;
+        text-align: right;
+        }
+        
+        .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 16px;
+        }
+        
+        .total-row.grand {
+        font-size: 20px;
+        font-weight: bold;
+        color: #1a73e8;
+        border-top: 2px solid #1a73e8;
+        padding-top: 12px;
+        margin-top: 12px;
+        }
+        
+        .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        justify-content: center;
+        }
+        
+        .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        min-width: 120px;
+        }
+        
+        .btn-primary {
+        background: #1a73e8;
+        color: white;
+        }
+        
+        .btn-primary:hover {
+        background: #1557b0;
+        }
+        
+        .btn-success {
+        background: #28a745;
+        color: white;
+        }
+        
+        .btn-success:hover {
+        background: #218838;
+        }
+        
+        .btn-secondary {
+        background: #6c757d;
+        color: white;
+        }
+        
+        .btn-secondary:hover {
+        background: #545b62;
+        }
+        
+        .payment-section {
+        background: #e1f5fe;
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 16px;
+        }
+        
+        .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        }
+    </style>
+    </head>
+    <body>
+    <div class="container">        
+        <!-- Booking Information -->
+        <div class="booking-info">
+        <div class="info-item">
+            <span class="info-label">Guest Name:</span>
+            <span class="info-value" id="guestName">Loading...</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Booking Group:</span>
+            <span class="info-value" id="bookingGroup">Loading...</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Room(s):</span>
+            <span class="info-value" id="roomNumbers">Loading...</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Check-in:</span>
+            <span class="info-value" id="checkinDate">Loading...</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Check-out:</span>
+            <span class="info-value" id="checkoutDate">Loading...</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Date:</span>
+            <span class="info-value" id="invoiceDate">Loading...</span>
+        </div>
+        </div>
+        
+        <!-- Add Items Form -->
+        <div class="form-section">
+        <h3>Add Services/Items</h3>
+        
+        <!-- Form Header -->
+        <div class="form-grid header">
+            <div>Service/Item</div>
+            <div>Category</div>
+            <div>Room</div>
+            <div>Quantity</div>
+            <div>Unit Price (₹)</div>
+            <div>Total (₹)</div>
+            <div>Action</div>
+        </div>
+        
+        <!-- Form Inputs -->
+        <div class="form-grid" id="itemForm">
+            <div>
+            <select id="serviceSelect">
+                <option value="">-- Select Service --</option>
+                <option value="Room Charges">Room Charges</option>
+                <option value="Food & Beverage">Food & Beverage</option>
+                <option value="Laundry">Laundry</option>
+                <option value="Spa Services">Spa Services</option>
+                <option value="Extra Bed">Extra Bed</option>
+                <option value="Late Checkout">Late Checkout</option>
+                <option value="Parking">Parking</option>
+                <option value="WiFi">WiFi</option>
+                <option value="Minibar">Minibar</option>
+                <option value="Other">Other (Custom)</option>
+            </select>
+            </div>
+            <div>
+            <select id="categorySelect">
+                <option value="">-- Select Category --</option>
+                <option value="Restaurant">Restaurant</option>
+                <option value="Hotel">Hotel</option>
+                <option value="MiniFreez">MiniFreez</option>
+            </select>
+            </div>
+            <div>
+            <select id="roomSelect">
+                <option value="">-- Select Room --</option>
+                <!-- Rooms will be populated dynamically from booking data -->
+            </select>
+            </div>
+            <div>
+            <input type="number" id="quantity" min="1" value="1" step="1">
+            </div>
+            <div>
+            <input type="number" id="unitPrice" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div>
+            <input type="number" id="totalPrice" readonly style="background: #f0f0f0;">
+            </div>
+            <div>
+            <button type="button" class="add-btn" onclick="addItem()">Add</button>
+            </div>
+        </div>
+        
+        <!-- Custom Service Input (hidden initially) -->
+        <div id="customServiceDiv" style="display: none; margin-top: 12px;">
+            <label for="customService">Custom Service Name:</label>
+            <input type="text" id="customService" placeholder="Enter custom service name">
+        </div>
+        </div>
+        
+        <!-- Items Table -->
+        <table class="items-table">
+        <thead>
+            <tr>
+            <th>Service/Item</th>
+            <th>Category</th>
+            <th>Room</th>
+            <th>Quantity</th>
+            <th>Unit Price (₹)</th>
+            <th>Total (₹)</th>
+            <th>Status</th>
+            <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="itemsTableBody">
+            <!-- Items will be populated dynamically -->
+        </tbody>
+        </table>
+        
+        <!-- Payment Section -->
+        <div class="payment-section">
+        <h3 style="margin-top: 0;">Payment Details</h3>
+        <div class="payment-grid">
+            <div>
+            <label for="paymentMethod">Payment Method:</label>
+            <select id="paymentMethod">
+                <option value="Cash">Cash</option>
+                <option value="Card">Credit/Debit Card</option>
+                <option value="UPI">UPI</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Pending">Pending</option>
+            </select>
+            </div>
+            <div>
+            <label for="paidAmount">Amount Paid (₹):</label>
+            <input type="number" id="paidAmount" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div>
+            <label for="paymentStatus">Status:</label>
+            <select id="paymentStatus">
+                <option value="Paid">Paid</option>
+                <option value="Partial">Partial Payment</option>
+                <option value="Pending">Pending</option>
+                <option value="Refund">Refund</option>
+            </select>
+            </div>
+            <div>
+            <label for="paymentNotes">Notes:</label>
+            <input type="text" id="paymentNotes" placeholder="Payment notes">
+            </div>
+        </div>
+        </div>
+        
+        <!-- Total Section -->
+        <div class="total-section">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span id="subtotal">₹0.00</span>
+        </div>
+        <div class="total-row">
+            <span>Tax (18% GST):</span>
+            <span id="taxAmount">₹0.00</span>
+        </div>
+        <div class="total-row">
+            <span>Discount:</span>
+            <span>
+            <input type="number" id="discountAmount" style="width: 100px; text-align: right;" 
+                    min="0" step="0.01" placeholder="0.00" onchange="calculateTotal()"> ₹
+            </span>
+        </div>
+        <div class="total-row grand">
+            <span>Grand Total:</span>
+            <span id="grandTotal">₹0.00</span>
+        </div>
+        <div class="total-row" style="color: #dc3545; margin-top: 8px;">
+            <span>Balance Due:</span>
+            <span id="balanceDue">₹0.00</span>
+        </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+        <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+        <button class="btn btn-primary" onclick="saveInvoice()">Save Invoice</button>
+        <button class="btn btn-success" onclick="printInvoice()">Print/Download</button>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🔧 SCRIPT SECTION STARTED');
+        
+        // Test simple data injection first
+        let testBookingData = '<?!= JSON.stringify(bookingData || {}) ?>';
+        let testInvoiceData = '<?!= JSON.stringify(invoiceData || {}) ?>';
+        
+        console.log('🔍 RAW INJECTION TEST:');
+        console.log('📊 testBookingData string:', testBookingData);
+        console.log('📊 testInvoiceData string:', testInvoiceData);
+        
+        // Google Apps Script data integration - populated by server
+        let bookingData, invoiceData;
+        
+        try {
+            bookingData = <?!= JSON.stringify(bookingData || {}) ?>;
+            console.log('✅ bookingData parsed successfully:', typeof bookingData);
+        } catch (e) {
+            console.error('❌ bookingData parsing failed:', e);
+            bookingData = {};
+        }
+        
+        try {
+            invoiceData = <?!= JSON.stringify(invoiceData || {}) ?>;
+            console.log('✅ invoiceData parsed successfully:', typeof invoiceData);
+        } catch (e) {
+            console.error('❌ invoiceData parsing failed:', e);
+            invoiceData = {};
+        }
+        
+        // Immediate debug of injected data
+        console.log('🔍 IMMEDIATE CHECK after data injection:');
+        console.log('📊 bookingData type:', typeof bookingData);
+        console.log('📊 bookingData value:', bookingData);
+        console.log('📊 invoiceData type:', typeof invoiceData);
+        console.log('📊 invoiceData value:', invoiceData);
+        
+        // Check for empty objects
+        if (bookingData && typeof bookingData === 'object') {
+            console.log('📊 bookingData keys:', Object.keys(bookingData));
+            console.log('📊 bookingData has guestName:', !!bookingData.guestName);
+        }
+        
+        let items = [];
+        let isSaved = false;
+        
+        // Button state management
+        function setSaveButtonState(saved) {
+            const saveBtn = document.querySelector('.btn-primary');
+            isSaved = saved;
+            if (saved) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = '✓ Saved';
+                saveBtn.style.background = '#28a745';
+                saveBtn.style.opacity = '0.8';
+            } else {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Invoice';
+                saveBtn.style.background = '#1a73e8';
+                saveBtn.style.opacity = '1';
+            }
+        }
+        
+        function markAsModified() {
+            if (isSaved) {
+                setSaveButtonState(false);
+            }
+        }
+        
+        // Initialize data from server
+        function initializeInvoiceData() {
+        console.log('🔍 DEBUGGING: Initialize function started');
+        console.log('📊 RAW bookingData:', bookingData);
+        console.log('📊 RAW invoiceData:', invoiceData);
+        console.log('🧪 Type of bookingData:', typeof bookingData);
+        console.log('🧪 Type of invoiceData:', typeof invoiceData);
+        
+        // Check if data injection worked
+        if (!bookingData) {
+            console.error('❌ CRITICAL: bookingData is null/undefined');
+            document.getElementById('guestName').textContent = 'ERROR: No booking data';
+            return;
+        }
+        
+        if (typeof bookingData === 'string') {
+            console.warn('⚠️ WARNING: bookingData is a string, attempting to parse');
+            try {
+                bookingData = JSON.parse(bookingData);
+            } catch (e) {
+                console.error('❌ PARSE ERROR:', e);
+                document.getElementById('guestName').textContent = 'ERROR: Invalid data format';
+                return;
+            }
+        }
+        
+        console.log('✅ PROCESSED bookingData:', bookingData);
+        
+        // Set booking information
+        if (bookingData && bookingData.guestName) {
+            console.log('✅ Setting guest info:', bookingData.guestName);
+            document.getElementById('guestName').textContent = bookingData.guestName;
+            document.getElementById('bookingGroup').textContent = bookingData.bookingGroupId;
+            document.getElementById('roomNumbers').textContent = Array.isArray(bookingData.rooms) ? bookingData.rooms.join(', ') : bookingData.rooms;
+            document.getElementById('checkinDate').textContent = formatDisplayDate(bookingData.checkin);
+            document.getElementById('checkoutDate').textContent = formatDisplayDate(bookingData.checkout);
+        } else {
+            console.error('❌ No valid guest data found in bookingData');
+            document.getElementById('guestName').textContent = 'ERROR: Missing guest data';
+        }
+        
+        if (invoiceData && invoiceData.invoiceDate) {
+            document.getElementById('invoiceDate').textContent = formatDisplayDate(invoiceData.invoiceDate);
+        } else {
+            // Set today's date for new invoices
+            const today = new Date();
+            document.getElementById('invoiceDate').textContent = formatDisplayDate(today.toISOString().split('T')[0]);
+        }
+        
+        // Populate room options in dropdown
+        populateRoomOptions();
+        
+        // Load existing items if editing
+        if (invoiceData && invoiceData.items && invoiceData.items.length > 0) {
+            // Ensure all numeric values are properly typed
+            items = invoiceData.items.map(item => ({
+                service: item.service || '',
+                category: item.category || '',
+                room: item.room || '',
+                quantity: parseFloat(item.quantity) || 0,
+                unitPrice: parseFloat(item.unitPrice) || 0,
+                total: parseFloat(item.total) || 0
+            }));
+            updateItemsTable();
+        }
+        
+        // Load payment information if editing
+        if (invoiceData && invoiceData.mode === 'EDIT') {
+            document.getElementById('paymentMethod').value = invoiceData.paymentMethod || 'Cash';
+            document.getElementById('paidAmount').value = invoiceData.paidAmount || '';
+            document.getElementById('paymentStatus').value = invoiceData.paymentStatus || 'Pending';
+            document.getElementById('paymentNotes').value = invoiceData.paymentNotes || '';
+            document.getElementById('discountAmount').value = invoiceData.discount || '';
+        }
+        
+        // Calculate totals
+        calculateTotal();
+        }
+        
+        function populateRoomOptions() {
+        const roomSelect = document.getElementById('roomSelect');
+        roomSelect.innerHTML = '<option value="">-- Select Room --</option>';
+        
+        if (bookingData.rooms && Array.isArray(bookingData.rooms)) {
+            bookingData.rooms.forEach(room => {
+            const option = document.createElement('option');
+            option.value = room;
+            option.textContent = room;
+            roomSelect.appendChild(option);
+            });
+        } else if (bookingData.rooms) {
+            // Single room
+            const option = document.createElement('option');
+            option.value = bookingData.rooms;
+            option.textContent = bookingData.rooms;
+            roomSelect.appendChild(option);
+        }
+        
+        // Add "All Rooms" option
+        const allOption = document.createElement('option');
+        allOption.value = 'All';
+        allOption.textContent = 'All Rooms';
+        roomSelect.appendChild(allOption);
+        }
+        
+        function formatDisplayDate(dateString) {
+        if (!dateString) return 'Not set';
+        
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+            });
+        } catch (e) {
+            return dateString;
+        }
+        }
+        
+        // Calculate total price when quantity or unit price changes
+        document.getElementById('quantity').addEventListener('input', function() {
+            calculateItemTotal();
+            markAsModified();
+        });
+        document.getElementById('unitPrice').addEventListener('input', function() {
+            calculateItemTotal();
+            markAsModified();
+        });
+        document.getElementById('paidAmount').addEventListener('input', function() {
+            calculateBalance();
+            markAsModified();
+        });
+        
+        // Mark as modified when payment fields change
+        document.getElementById('paymentMethod').addEventListener('change', markAsModified);
+        document.getElementById('paymentStatus').addEventListener('change', markAsModified);
+        document.getElementById('paymentNotes').addEventListener('input', markAsModified);
+        document.getElementById('discountAmount').addEventListener('input', function() {
+            calculateTotal();
+            markAsModified();
+        });
+        
+        // Show/hide custom service input
+        document.getElementById('serviceSelect').addEventListener('change', function() {
+        const customDiv = document.getElementById('customServiceDiv');
+        if (this.value === 'Other') {
+            customDiv.style.display = 'block';
+        } else {
+            customDiv.style.display = 'none';
+        }
+        });
+        
+        function calculateItemTotal() {
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+        const total = quantity * unitPrice;
+        document.getElementById('totalPrice').value = total.toFixed(2);
+        }
+        
+        function addItem() {
+        const serviceSelect = document.getElementById('serviceSelect');
+        const categorySelect = document.getElementById('categorySelect');
+        const roomSelect = document.getElementById('roomSelect');
+        const customService = document.getElementById('customService');
+        const quantity = document.getElementById('quantity');
+        const unitPrice = document.getElementById('unitPrice');
+        const totalPrice = document.getElementById('totalPrice');
+        
+        // Validation
+        let serviceName = serviceSelect.value;
+        if (serviceName === 'Other') {
+            serviceName = customService.value.trim();
+            if (!serviceName) {
+            alert('Please enter a custom service name');
+            return;
+            }
+        } else if (!serviceName) {
+            alert('Please select a service');
+            return;
+        }
+        
+        if (!categorySelect.value) {
+            alert('Please select a category');
+            return;
+        }
+        
+        if (!roomSelect.value) {
+            alert('Please select a room');
+            return;
+        }
+        
+        if (!quantity.value || quantity.value <= 0) {
+            alert('Please enter a valid quantity');
+            return;
+        }
+        
+        if (!unitPrice.value || unitPrice.value <= 0) {
+            alert('Please enter a valid unit price');
+            return;
+        }
+        
+        // Add to items array
+        const newItem = {
+            service: serviceName,
+            category: categorySelect.value,
+            room: roomSelect.value,
+            quantity: parseFloat(quantity.value),
+            unitPrice: parseFloat(unitPrice.value),
+            total: parseFloat(totalPrice.value),
+            status: 'Pending'
+        };
+        
+        items.push(newItem);
+        
+        // Update table
+        updateItemsTable();
+        
+        // Clear form
+        clearItemForm();
+        
+        // Recalculate totals
+        calculateTotal();
+        
+        // Mark as modified
+        markAsModified();
+        }
+        
+        function removeItem(button) {
+        const row = button.closest('tr');
+        const index = Array.from(row.parentNode.children).indexOf(row);
+        
+        // Remove from items array
+        items.splice(index, 1);
+        
+        // Update table
+        updateItemsTable();
+        
+        // Recalculate totals
+        calculateTotal();
+        
+        // Mark as modified
+        markAsModified();
+        }
+        
+        function updateItemsTable() {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        
+        items.forEach((item, index) => {
+            const row = tbody.insertRow();
+            // Ensure numeric values are properly handled
+            const quantity = parseFloat(item.quantity) || 0;
+            const unitPrice = parseFloat(item.unitPrice) || 0;
+            const total = parseFloat(item.total) || 0;
+            
+            row.innerHTML = `
+            <td>${item.service || ''}</td>
+            <td>${item.category || ''}</td>
+            <td>${item.room || ''}</td>
+            <td class="number">${quantity}</td>
+            <td class="number">${unitPrice.toFixed(2)}</td>
+            <td class="number">${total.toFixed(2)}</td>
+            <td>
+                <select onchange="updateItemStatus(${index}, this.value)" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="Pending" ${(item.status === 'Pending' || !item.status) ? 'selected' : ''}>Pending</option>
+                    <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="Completed" ${item.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                    <option value="Cancelled" ${item.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+            </td>
+            <td><button class="remove-btn" onclick="removeItem(this)">Remove</button></td>
+            `;
+        });
+        }
+        
+        function calculateTotal() {
+        const subtotal = items.reduce((sum, item) => {
+            const total = parseFloat(item.total) || 0;
+            return sum + total;
+        }, 0);
+        const taxRate = 0.18; // 18% GST
+        const taxAmount = subtotal * taxRate;
+        const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+        const grandTotal = subtotal + taxAmount - discount;
+        
+        document.getElementById('subtotal').textContent = `₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        document.getElementById('taxAmount').textContent = `₹${taxAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        document.getElementById('grandTotal').textContent = `₹${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        
+        calculateBalance();
+        }
+        
+        function calculateBalance() {
+        const grandTotal = parseFloat(document.getElementById('grandTotal').textContent.replace('₹', '').replace(/,/g, '')) || 0;
+        const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+        const balanceDue = grandTotal - paidAmount;
+        
+        document.getElementById('balanceDue').textContent = `₹${balanceDue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        document.getElementById('balanceDue').style.color = balanceDue > 0 ? '#dc3545' : '#28a745';
+        }
+        
+        function updateItemStatus(index, newStatus) {
+            if (items[index]) {
+                items[index].status = newStatus;
+                // Mark as modified and auto-save silently when status changes
+                markAsModified();
+                saveInvoiceQuietly();
+            }
+        }
+        
+        function clearItemForm() {
+        document.getElementById('serviceSelect').value = '';
+        document.getElementById('categorySelect').value = '';
+        document.getElementById('roomSelect').value = '';
+        document.getElementById('customService').value = '';
+        document.getElementById('quantity').value = '1';
+        document.getElementById('unitPrice').value = '';
+        document.getElementById('totalPrice').value = '';
+        document.getElementById('customServiceDiv').style.display = 'none';
+        }
+        
+        function clearForm() {
+        if (confirm('Clear all items and reset the form?')) {
+            items.length = 0;
+            updateItemsTable();
+            clearItemForm();
+            document.getElementById('discountAmount').value = '';
+            document.getElementById('paidAmount').value = '';
+            document.getElementById('paymentNotes').value = '';
+            calculateTotal();
+            setSaveButtonState(false);
+        }
+        }
+        
+        function saveInvoice() {
+        // Validate required data
+        if (items.length === 0) {
+            alert('Please add at least one item to the invoice.');
+            return;
+        }
+        
+        if (!bookingData.bookingGroupId) {
+            alert('Error: No booking group ID found.');
+            return;
+        }
+        
+        // Calculate totals
+        const subtotal = items.reduce((sum, item) => {
+            const total = parseFloat(item.total) || 0;
+            return sum + total;
+        }, 0);
+        const taxAmount = subtotal * 0.18;
+        const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+        const grandTotal = subtotal + taxAmount - discount;
+        const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+        const balanceDue = grandTotal - paidAmount;
+        
+        // Prepare invoice data
+        const invoiceDataToSave = {
+            bookingGroupId: bookingData.bookingGroupId,
+            invoiceId: invoiceData.invoiceId || null,
+            invoiceNumber: invoiceData.invoiceNumber,
+            guestName: bookingData.guestName,
+            roomNumbers: Array.isArray(bookingData.rooms) ? bookingData.rooms.join(', ') : bookingData.rooms,
+            invoiceDate: invoiceData.invoiceDate || new Date().toISOString().split('T')[0],
+            subtotal: subtotal,
+            taxAmount: taxAmount,
+            discount: discount,
+            grandTotal: grandTotal,
+            paidAmount: paidAmount,
+            balanceDue: balanceDue,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            paymentStatus: document.getElementById('paymentStatus').value,
+            paymentNotes: document.getElementById('paymentNotes').value,
+            items: items,
+            mode: invoiceData.mode || 'NEW'
+        };
+        
+        // Call Google Apps Script function
+        google.script.run
+            .withSuccessHandler(function(result) {
+            if (result.success) {
+                // Invoice saved successfully - disable save button
+                console.log('Invoice saved successfully:', result.invoiceNumber);
+                setSaveButtonState(true);
+            } else {
+                console.error('Error saving invoice:', result.message);
+                alert(`❌ Error saving invoice: ${result.message}`);
+            }
+            })
+            .withFailureHandler(function(error) {
+            console.error('Failed to save invoice:', error.message);
+            alert(`❌ Failed to save invoice: ${error.message}`);
+            })
+            .saveInvoice(invoiceDataToSave);
+        }
+        
+        function saveInvoiceQuietly() {
+        // Same as saveInvoice but without user feedback - for auto-saves
+        if (items.length === 0 || !bookingData.bookingGroupId) {
+            return; // Silently exit if no data to save
+        }
+        
+        // Calculate totals
+        const subtotal = items.reduce((sum, item) => {
+            const total = parseFloat(item.total) || 0;
+            return sum + total;
+        }, 0);
+        const taxAmount = subtotal * 0.18;
+        const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+        const grandTotal = subtotal + taxAmount - discount;
+        const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+        const balanceDue = grandTotal - paidAmount;
+        
+        // Prepare invoice data
+        const invoiceDataToSave = {
+            bookingGroupId: bookingData.bookingGroupId,
+            invoiceId: invoiceData.invoiceId || null,
+            invoiceNumber: invoiceData.invoiceNumber,
+            guestName: bookingData.guestName,
+            roomNumbers: Array.isArray(bookingData.rooms) ? bookingData.rooms.join(', ') : bookingData.rooms,
+            invoiceDate: invoiceData.invoiceDate || new Date().toISOString().split('T')[0],
+            subtotal: subtotal,
+            taxAmount: taxAmount,
+            discount: discount,
+            grandTotal: grandTotal,
+            paidAmount: paidAmount,
+            balanceDue: balanceDue,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            paymentStatus: document.getElementById('paymentStatus').value,
+            paymentNotes: document.getElementById('paymentNotes').value,
+            items: items,
+            mode: invoiceData.mode || 'NEW'
+        };
+        
+        // Call Google Apps Script function silently
+        google.script.run
+            .withSuccessHandler(function(result) {
+                if (result.success) {
+                    console.log('Invoice auto-saved successfully:', result.invoiceNumber);
+                    // Update invoiceData with saved data for future saves
+                    if (!invoiceData.invoiceId) {
+                        invoiceData.invoiceId = result.invoiceId;
+                        invoiceData.mode = 'EDIT';
+                    }
+                } else {
+                    console.error('Error auto-saving invoice:', result.message);
+                }
+            })
+            .withFailureHandler(function(error) {
+                console.error('Failed to auto-save invoice:', error.message);
+            })
+            .saveInvoice(invoiceDataToSave);
+        }
+        
+        function printInvoice() {
+        // Validate that we have invoice data
+        if (!bookingData || !bookingData.guestName) {
+            alert('❌ No invoice data available for printing.');
+            return;
+        }
+        
+        if (items.length === 0) {
+            alert('❌ No items in invoice. Please add items before printing.');
+            return;
+        }
+        
+        console.log('🖨️ Direct print - no modal');
+        
+        // Create a hidden iframe for printing
+        const printFrame = document.createElement('iframe');
+        printFrame.style.display = 'none';
+        document.body.appendChild(printFrame);
+        
+        // Generate the invoice content
+        const invoiceHTML = generatePrintableInvoice();
+        
+        // Write content to iframe
+        printFrame.contentDocument.open();
+        printFrame.contentDocument.write(invoiceHTML);
+        printFrame.contentDocument.close();
+        
+        // Wait for content to load, then print
+        printFrame.onload = function() {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+            
+            // Remove iframe after printing
+            setTimeout(() => {
+                document.body.removeChild(printFrame);
+            }, 1000);
+        };
+        }
+        
+        function formatRoomNamesForPrint(roomText) {
+        if (!roomText) return 'N/A';
+        
+        // Split by comma if multiple rooms
+        return roomText.split(', ').map(room => {
+            // Remove anything after " with" (case insensitive)
+            return room.replace(/ with.*/i, '').trim();
+        }).join(', ');
+        }
+        
+        function generatePrintableInvoice() {
+        // Get current data
+        const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+        const taxAmount = subtotal * 0.18;
+        const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+        const grandTotal = subtotal + taxAmount - discount;
+        const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+        const balanceDue = grandTotal - paidAmount;
+        
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Invoice ${invoiceData.invoiceNumber || 'Draft'}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background: white;
+                    color: #333;
+                    line-height: 1.4;
+                }
+                .invoice-header {
+                    border-bottom: 3px solid #1a73e8;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .company-info h1 {
+                    color: #1a73e8;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .invoice-details {
+                    text-align: right;
+                }
+                .invoice-number {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #1a73e8;
+                    margin: 0;
+                }
+                .invoice-date {
+                    color: #666;
+                    margin: 5px 0;
+                }
+                .billing-section {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 40px;
+                    margin-bottom: 30px;
+                }
+                .billing-info h3 {
+                    margin: 0 0 10px 0;
+                    color: #1a73e8;
+                    border-bottom: 1px solid #ddd;
+                    padding-bottom: 5px;
+                }
+                .info-line {
+                    margin: 5px 0;
+                }
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 30px;
+                }
+                .items-table th,
+                .items-table td {
+                    padding: 12px 8px;
+                    text-align: left;
+                    border: 1px solid #ddd;
+                }
+                .items-table th {
+                    background: #f8f9fa;
+                    font-weight: bold;
+                    color: #333;
+                }
+                .items-table .number {
+                    text-align: right;
+                }
+                .items-table tr:nth-child(even) {
+                    background: #f9f9f9;
+                }
+                .totals-section {
+                    float: right;
+                    width: 300px;
+                    margin-bottom: 30px;
+                }
+                .total-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #eee;
+                }
+                .total-row.grand {
+                    border-top: 2px solid #1a73e8;
+                    border-bottom: 2px solid #1a73e8;
+                    font-weight: bold;
+                    font-size: 18px;
+                    color: #1a73e8;
+                    margin-top: 10px;
+                }
+                .payment-info {
+                    clear: both;
+                    margin-top: 30px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 5px;
+                }
+                .payment-info h3 {
+                    margin: 0 0 10px 0;
+                    color: #1a73e8;
+                }
+                .payment-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 15px;
+                }
+                .footer {
+                    margin-top: 40px;
+                    text-align: center;
+                    color: #666;
+                    font-size: 12px;
+                    border-top: 1px solid #ddd;
+                    padding-top: 15px;
+                }
+                @media print {
+                    body { margin: 0; padding: 15px; }
+                    .invoice-header { page-break-inside: avoid; }
+                    .items-table { page-break-inside: auto; }
+                    .totals-section { page-break-inside: avoid; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="invoice-header">
+                <div class="company-info">
+                    <h1>Izabia - Bhumzang Hotel and Banquet</h1>
+                    <div style="color: #666; margin-top: 5px;">Professional Hospitality Services</div>
+                </div>
+                <div class="invoice-details">
+                    <div class="invoice-number">Invoice #${invoiceData.invoiceNumber || 'DRAFT'}</div>
+                    <div class="invoice-date">Date: ${document.getElementById('invoiceDate').textContent}</div>
+                </div>
+            </div>
+            
+            <div class="billing-section">
+                <div class="billing-info">
+                    <h3>Bill To:</h3>
+                    <div class="info-line"><strong>${document.getElementById('guestName').textContent}</strong></div>
+                    <div class="info-line">Room(s): ${formatRoomNamesForPrint(document.getElementById('roomNumbers').textContent)}</div>
+                </div>
+                <div class="billing-info">
+                    <h3>Stay Details:</h3>
+                    <div class="info-line">Check-in: ${document.getElementById('checkinDate').textContent}</div>
+                    <div class="info-line">Check-out: ${document.getElementById('checkoutDate').textContent}</div>
+                    <div class="info-line">Invoice Date: ${document.getElementById('invoiceDate').textContent}</div>
+                </div>
+            </div>
+            
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Service/Item</th>
+                        <th>Room</th>
+                        <th class="number">Qty</th>
+                        <th class="number">Unit Price</th>
+                        <th class="number">Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map(item => `
+                        <tr>
+                            <td>${item.service}</td>
+                            <td>${formatRoomNamesForPrint(item.room)}</td>
+                            <td class="number">${item.quantity}</td>
+                            <td class="number">₹${parseFloat(item.unitPrice).toFixed(2)}</td>
+                            <td class="number">₹${parseFloat(item.total).toFixed(2)}</td>
+                            <td>${item.status || 'Pending'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            
+            <div class="totals-section">
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>₹${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="total-row">
+                    <span>Tax (18% GST):</span>
+                    <span>₹${taxAmount.toFixed(2)}</span>
+                </div>
+                ${discount > 0 ? `
+                <div class="total-row">
+                    <span>Discount:</span>
+                    <span>-₹${discount.toFixed(2)}</span>
+                </div>
+                ` : ''}
+                <div class="total-row grand">
+                    <span>Grand Total:</span>
+                    <span>₹${grandTotal.toFixed(2)}</span>
+                </div>
+            </div>
+            
+            <div class="payment-info">
+                <h3>Payment Information</h3>
+                <div class="payment-grid">
+                    <div><strong>Payment Method:</strong> ${document.getElementById('paymentMethod').value}</div>
+                    <div><strong>Payment Status:</strong> ${document.getElementById('paymentStatus').value}</div>
+                    <div><strong>Amount Paid:</strong> ₹${paidAmount.toFixed(2)}</div>
+                    <div><strong>Balance Due:</strong> <span style="color: ${balanceDue > 0 ? '#dc3545' : '#28a745'}">₹${balanceDue.toFixed(2)}</span></div>
+                    ${document.getElementById('paymentNotes').value ? `
+                    <div style="grid-column: 1 / -1;"><strong>Notes:</strong> ${document.getElementById('paymentNotes').value}</div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Thank you for choosing our services!</p>
+                <p>This is a computer-generated invoice and does not require a signature.</p>
+            </div>
+        </body>
+        </html>
+        `;
+        }
+        
+        // Initialize when page loads
+        window.onload = function() {
+        console.log('🚀 PAGE LOADED - Starting initialization');
+        console.log('🔍 Checking data availability...');
+        console.log('📊 window.bookingData exists:', typeof window.bookingData !== 'undefined');
+        console.log('📊 window.invoiceData exists:', typeof window.invoiceData !== 'undefined');
+        console.log('📊 Global bookingData:', bookingData);
+        console.log('📊 Global invoiceData:', invoiceData);
+        
+        // Try to detect if we're in Google Apps Script environment
+        console.log('🔍 Google Script Host available:', typeof google !== 'undefined' && typeof google.script !== 'undefined');
+        
+        try {
+            initializeInvoiceData();
+            console.log('✅ Initialization completed successfully');
+        } catch (error) {
+            console.error('❌ INITIALIZATION ERROR:', error);
+            document.getElementById('guestName').textContent = 'ERROR: ' + error.message;
+        }
+        };
+    </script>
+    </body>
+    </html>

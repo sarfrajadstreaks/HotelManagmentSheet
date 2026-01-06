@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: Arial; padding: 8px; margin: 0; }
+    .container { display: flex; gap: 12px; }
+    .booking-form { flex: 1; min-width: 280px; }
+    .accordion-container { 
+      flex: 1; 
+      min-width: 280px; 
+      max-height: 638px; 
+      overflow-y: auto; 
+      padding-right: 6px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 8px;
+      align-content: start;
+    }
+
+    /* Main form grid layout */
+    .main-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .main-form-grid .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label { display:block; margin-top:6px; font-weight:bold; font-size:13px; }
+    input, select, textarea { width:100%; padding:4px; margin-top:2px; box-sizing:border-box; font-size:13px; }
+    textarea { resize: vertical; min-height:40px; }
+    button { margin-top:10px; padding:8px; width:100%; background:#1a73e8; color:white; border:none; cursor:pointer; font-size:13px; }
+    .error { border: 2px solid red !important; }
+
+    /* Mode indicator styles */
+    .mode-indicator {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-left: 6px;
+    }
+    .mode-new { background: #e8f5e8; color: #2e7d2e; }
+    .mode-edit { background: #fff3cd; color: #856404; }
+    #formTitle{
+        margin: 0;
+    }
+    /* Card styles with display/edit modes */
+    .reservation-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      max-width: 450px;
+    }
+    .reservation-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .card-title-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+    }
+    .room-badge {
+      background: #1a73e8;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .card-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .card-content .full-width {
+      grid-column: 1 / -1;
+    }
+    .card-content .two-columns {
+      grid-column: span 2;
+    }
+    .field-item {
+      padding: 2px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      min-height: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .field-item:hover {
+      background-color: #f8f9fa;
+    }
+    .field-label {
+      font-size: 9px;
+      color: #666;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .field-value {
+      font-size: 12px;
+      color: #333;
+      min-height: 16px;
+    }
+    .field-value.empty {
+      color: #999;
+      font-style: italic;
+    }
+    .field-input {
+      display: none;
+      width: 100%;
+      border: 1px solid #1a73e8;
+      border-radius: 3px;
+      padding: 4px;
+      font-size: 12px;
+      background: white;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: #0d47a1;
+    }
+    .removeCardBtn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 1px 4px;
+      cursor: pointer;
+      border-radius: 3px;
+      font-size: 8px;
+      transition: background 0.2s;
+      height: 18px;
+      width: 18px;
+      white-space: nowrap;
+    }
+    .removeCardBtn:hover {
+      background: #c82333;
+    }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #assignRoomBtn:disabled { background: #ccc; color: #666; }
+    #submitBtn:disabled { background: #ccc; color: #666; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- LEFT: Booking Form -->
+  <div class="booking-form" id="mainBookingForm">
+    <!-- Form content will be populated by JavaScript -->
+  </div>
+
+  <!-- RIGHT: Card Forms per Room -->
+  <div class="accordion-container" id="accordionContainer">
+    <!-- dynamically generated cards appear here -->
+  </div>
+</div>
+
+<script>
+  // Google Apps Script data integration
+  let data = <?!= JSON.stringify(data || {}) ?>;
+  let roomList = <?!= JSON.stringify(roomList || []) ?>;
+
+  let roomSelect; // Will be initialized after form is created
+  let reservationsLoaded = false; // Flag to prevent duplicate loading
+  const accordionContainer = document.getElementById('accordionContainer');
+  
+  // Store backend guest counts during loading to avoid form corruption
+  let backendAdults = null;
+  let backendChildren = null;
+
+  // Form Templates
+  const FormTemplates = {
+    // Main booking form fields template
+    bookingForm: `
+      <input type="hidden" id="bookingGroupId">
+      <input type="hidden" id="formMode">
+      
+      <div class="main-form-grid">
+        <div>
+          <label>Guest Name</label><input id="guest" required>
+        </div>
+        <div>
+          <label>Phone</label><input id="phone" type="number">
+        </div>
+        
+        <div class="full-width">
+          <label>Address</label><textarea id="address"></textarea>
+        </div>
+        
+        <div>
+          <label>Check-in</label><input type="date" id="checkin" required>
+        </div>
+        <div>
+          <label>Check-out</label><input type="date" id="checkout" required>
+        </div>
+        
+        <div>
+          <label>Adults</label><input type="number" id="adults" min="1" value="1">
+        </div>
+        <div>
+          <label>Children</label><input type="number" id="children" min="0" value="0">
+        </div>
+        
+        <div>
+          <label>Plan</label>
+          <select id="plan">
+            <option value="EP">EP</option>
+            <option value="CP">CP</option>
+            <option value="MAP">MAP</option>
+          </select>
+        </div>
+        <div>
+          <label>Booking Rate</label><input type="number" id="rate" min="0">
+        </div>
+        
+        <div>
+          <label>Source</label>
+          <select id="source">
+            <option value="MMT">MMT</option>
+            <option value="AGODA">AGODA</option>
+            <option value="IZABIA">IZABIA</option>
+            <option value="WALKING">WALKING</option>
+            <option value="OTHERS">OTHERS</option>
+          </select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="status">
+            <option value="Confirmed">Confirmed</option>
+            <option value="Blocked">Blocked</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="full-width">
+          <label>Notes</label><textarea id="notes"></textarea>
+        </div>
+      </div>
+      
+      <div style="margin-top: 16px;">
+        <button type="button" id="assignRoomBtn" onclick="addRoomAccordion()" disabled>+ Assign Room</button>
+        <small id="roomCounter" style="display: block; margin-top: 8px; color: #666;">No rooms assigned</small>
+        <small id="guestDistribution" style="display: none; margin-top: 4px; color: #2980b9;"></small>
+        <small id="dateRequirement" style="display: block; margin-top: 4px; color: #e74c3c; font-style: italic;">Please select check-in and check-out dates to assign rooms</small>
+      </div>
+      
+      <!-- Hidden select to store available rooms -->
+      <select id="roomSelect" multiple style="display: none;"></select>
+      
+      <button id="submitBtn" onclick="submitBooking()" disabled>Submit Booking</button>
+    `,
+
+    // Individual reservation form template (for cards)
+    reservationForm: `
+      <div class="card-content">
+        <div class="field-item" data-field="room">
+          <div class="field-label">Room</div>
+          <div class="field-value empty">Click to select room</div>
+          <select class="field-input roomSingle">
+            <option value="">-- Select a Room --</option>
+          </select>
+        </div>
+        <div class="field-item" data-field="plan">
+          <div class="field-label">Plan</div>
+          <div class="field-value">EP</div>
+          <select class="field-input plan">
+            <option value="EP">EP</option>
+            <option value="CP">CP</option>
+            <option value="MAP">MAP</option>
+          </select>
+        </div>
+        <div class="field-item" data-field="status">
+          <div class="field-label">Status</div>
+          <div class="field-value">Confirmed</div>
+          <select class="field-input status">
+            <option value="Confirmed">Confirmed</option>
+            <option value="Blocked">Blocked</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="field-item" data-field="guest">
+          <div class="field-label">Guest Name</div>
+          <div class="field-value">{{guestName}}</div>
+          <input class="field-input guest" type="text" value="{{guestName}}">
+        </div>
+        <div class="field-item" data-field="checkin">
+          <div class="field-label">Check-in</div>
+          <div class="field-value">{{checkin}}</div>
+          <input class="field-input checkin" type="date" value="{{checkin}}">
+        </div>
+        <div class="field-item" data-field="checkout">
+          <div class="field-label">Check-out</div>
+          <div class="field-value">{{checkout}}</div>
+          <input class="field-input checkout" type="date" value="{{checkout}}">
+        </div>
+        
+        <div class="field-item" data-field="adults">
+          <div class="field-label">Adults</div>
+          <div class="field-value">{{adults}}</div>
+          <input class="field-input adults" type="number" value="{{adults}}" min="1">
+        </div>
+        <div class="field-item" data-field="children">
+          <div class="field-label">Children</div>
+          <div class="field-value">{{children}}</div>
+          <input class="field-input children" type="number" value="{{children}}" min="0">
+        </div>
+        <div class="field-item" data-field="rate">
+          <div class="field-label">Rate</div>
+          <div class="field-value">{{rate}}</div>
+          <input class="field-input rate" type="number" value="{{rate}}">
+        </div>
+        
+        <div class="field-item" data-field="address">
+          <div class="field-label">Address</div>
+          <div class="field-value">{{address}}</div>
+          <textarea class="field-input address" rows="2">{{address}}</textarea>
+        </div>
+        <div class="field-item" data-field="notes">
+          <div class="field-label">Notes</div>
+          <div class="field-value">{{notes}}</div>
+          <textarea class="field-input notes" rows="2">{{notes}}</textarea>
+        </div>
+      </div>
+    `
+  };
+
+  // Form mode detection and UI setup
+  function setupFormMode() {
+    const formModeInput = document.getElementById('formMode');
+    
+    let mode = 'NEW'; // default
+    
+    if (data && data.mode) {
+      formModeInput.value = data.mode;
+      
+      switch(data.mode) {
+        case 'BOOKING_EDIT':
+          mode = 'EDIT';
+          break;
+        default:
+          mode = 'NEW';
+      }
+    } else {
+      formModeInput.value = 'NEW';
+    }
+    
+    // Store mode for other functions to use
+    window.currentFormMode = mode;
+    
+    // Log mode for debugging
+    console.log('Form Mode:', mode, 'Data:', data);
+  }
+
+  // Helper function to populate template with values
+  function populateTemplate(template, values) {
+    let result = template;
+    for (const [key, value] of Object.entries(values)) {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      result = result.replace(regex, value || '');
+    }
+    return result;
+  }
+
+  // Calculate remaining adults and children for new room
+  function calculateRemainingGuests() {
+    // Always use main form values (which represent total guests across all reservations)
+    const totalAdults = parseInt(document.getElementById('adults').value) || 0;
+    const totalChildren = parseInt(document.getElementById('children').value) || 0;
+    
+    // Calculate already assigned guests from existing cards
+    let assignedAdults = 0;
+    let assignedChildren = 0;
+    
+    Array.from(accordionContainer.querySelectorAll('.reservation-card')).forEach(card => {
+      // Use field-input values (the actual input fields) instead of display inputs
+      const adultsInput = card.querySelector('.field-input.adults');
+      const childrenInput = card.querySelector('.field-input.children');
+      
+      assignedAdults += parseInt(adultsInput.value) || 0;
+      assignedChildren += parseInt(childrenInput.value) || 0;
+    });
+    
+    // Calculate remaining
+    const remainingAdults = Math.max(0, totalAdults - assignedAdults);
+    const remainingChildren = Math.max(0, totalChildren - assignedChildren);
+    
+    return { remainingAdults, remainingChildren };
+  }
+
+  // Setup click-to-edit functionality for card fields
+  function setupClickToEdit(card) {
+    const fieldItems = card.querySelectorAll('.field-item');
+    
+    fieldItems.forEach(fieldItem => {
+      const fieldValue = fieldItem.querySelector('.field-value');
+      const fieldInput = fieldItem.querySelector('.field-input');
+      const fieldName = fieldItem.dataset.field;
+      
+      // Click to edit
+      fieldItem.addEventListener('click', function(e) {
+        if (fieldInput.style.display !== 'block') {
+          // Switch to edit mode
+          fieldValue.style.display = 'none';
+          fieldInput.style.display = 'block';
+          fieldInput.focus();
+          if (fieldInput.type === 'text' || fieldInput.tagName === 'TEXTAREA') {
+            fieldInput.select();
+          }
+        }
+      });
+      
+      // Save on blur or enter
+      function saveField() {
+        const newValue = fieldInput.value;
+        
+        // Update display value
+        if (newValue) {
+          if (fieldName === 'room') {
+            fieldValue.textContent = newValue;
+            fieldValue.classList.remove('empty');
+            // Update room badge
+            const roomBadge = card.querySelector('.room-badge');
+            roomBadge.textContent = newValue.split(' — ')[0];
+            roomBadge.style.display = 'inline-block';
+          } else if (fieldName === 'plan') {
+            fieldValue.textContent = newValue;
+          } else if (fieldName === 'status') {
+            fieldValue.textContent = newValue;
+          } else if (fieldName === 'checkin' || fieldName === 'checkout') {
+            fieldValue.textContent = newValue || 'Not set';
+          } else {
+            fieldValue.textContent = newValue || 'Not set';
+          }
+        } else {
+          fieldValue.textContent = fieldName === 'room' ? 'Click to select room' : 'Not set';
+          fieldValue.classList.add('empty');
+          if (fieldName === 'room') {
+            const roomBadge = card.querySelector('.room-badge');
+            roomBadge.style.display = 'none';
+          }
+        }
+        
+        // Switch back to display mode
+        fieldValue.style.display = 'block';
+        fieldInput.style.display = 'none';
+        
+        // Trigger updates
+        if (fieldName === 'room') {
+          updateAllRoomDropdowns();
+          updateRoomCounter();
+        } else if (fieldName === 'adults' || fieldName === 'children') {
+          updateGuestDistributionDisplay();
+        } else if (fieldName === 'checkin' || fieldName === 'checkout') {
+          updateReservationCheckoutMinDate(card);
+        }
+      }
+      
+      fieldInput.addEventListener('blur', saveField);
+      fieldInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          // Allow Enter in textareas for new lines, save on Enter for other inputs
+          if (fieldInput.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            saveField();
+          }
+        } else if (e.key === 'Escape') {
+          // Cancel editing
+          fieldValue.style.display = 'block';
+          fieldInput.style.display = 'none';
+          fieldInput.value = fieldInput.defaultValue;
+        }
+      });
+      
+      // Add input event listeners for guest count fields
+      if (fieldName === 'adults' || fieldName === 'children') {
+        fieldInput.addEventListener('input', updateGuestDistributionDisplay);
+      }
+    });
+  }
+
+  // Add a new room card
+  function addRoomAccordion() {
+    const cardCount = accordionContainer.children.length + 1;
+    
+    const card = document.createElement('div');
+    card.className = 'reservation-card';
+    card.setAttribute('data-card-id', cardCount);
+    
+    // First create the card with default values
+    const reservationFormContent = populateTemplate(FormTemplates.reservationForm, {
+      guestName: document.getElementById('guest').value || 'Not set',
+      address: document.getElementById('address').value || 'Not set',
+      checkin: document.getElementById('checkin').value || 'Not set',
+      checkout: document.getElementById('checkout').value || 'Not set',
+      adults: 1, // Start with 1 adult by default
+      children: 0,
+      rate: document.getElementById('rate').value || 'Not set',
+      notes: document.getElementById('notes').value || 'Not set'
+    });
+    
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-title-section">
+          <span class="card-title">Reservation #${cardCount}</span>
+          <span class="room-badge" style="display: none;">No Room</span>
+        </div>
+        <button type="button" class="removeCardBtn" onclick="removeRoomAccordion(this)">X</button>
+      </div>
+      ${reservationFormContent}
+    `;
+    
+    accordionContainer.appendChild(card);
+
+    // Initialize click-to-edit functionality
+    setupClickToEdit(card);
+    
+    // Now calculate remaining guests and update the newly added card
+    const { remainingAdults, remainingChildren } = calculateRemainingGuests();
+    
+    // Update the new card with proper remaining guest counts
+    const adultsInput = card.querySelector('.field-input.adults');
+    const adultsValue = card.querySelector('[data-field="adults"] .field-value');
+    const childrenInput = card.querySelector('.field-input.children');
+    const childrenValue = card.querySelector('[data-field="children"] .field-value');
+    
+    // Set the correct values based on remaining guests
+    const newAdults = Math.max(1, remainingAdults); // At least 1 adult
+    const newChildren = remainingChildren;
+    
+    adultsInput.value = newAdults;
+    adultsValue.textContent = newAdults;
+    childrenInput.value = newChildren;
+    childrenValue.textContent = newChildren;
+    
+    const roomDropdown = card.querySelector('.roomSingle');
+    const checkinInput = card.querySelector('.checkin');
+    const checkoutInput = card.querySelector('.checkout');
+    const roomBadge = card.querySelector('.room-badge');
+    
+    // Event listeners for guest count changes are now added in setupClickToEdit for better timing
+    
+    // Add date validation for reservation form
+    checkinInput.addEventListener('change', function() {
+      updateReservationCheckoutMinDate(card);
+    });
+    
+    checkoutInput.addEventListener('change', function() {
+      updateReservationCheckoutMinDate(card);
+    });
+
+    // Event when room is selected (handled by click-to-edit now)
+    roomDropdown.addEventListener('change', function() {
+      const selectedRoom = this.value;
+      const fieldValue = card.querySelector('[data-field="room"] .field-value');
+      
+      if (selectedRoom) {
+        // Update display and badge
+        fieldValue.textContent = selectedRoom;
+        fieldValue.classList.remove('empty');
+        roomBadge.textContent = selectedRoom.split(' — ')[0];
+        roomBadge.style.display = 'inline-block';
+      } else {
+        fieldValue.textContent = 'Click to select room';
+        fieldValue.classList.add('empty');
+        roomBadge.style.display = 'none';
+      }
+      
+      // Update all room dropdowns to reflect new selection
+      updateAllRoomDropdowns();
+      updateRoomCounter();
+    });
+
+    // Populate room options
+    updateAllRoomDropdowns();
+    updateRoomCounter();
+    // Update guest distribution immediately after adding the card
+    updateGuestDistributionDisplay();
+  }
+
+  // Remove a room card
+  function removeRoomAccordion(button) {
+    const card = button.closest('.reservation-card');
+    card.remove();
+    
+    // Renumber remaining cards
+    Array.from(accordionContainer.children).forEach((cardEl, index) => {
+      const cardTitle = cardEl.querySelector('.card-title');
+      const roomBadge = cardEl.querySelector('.room-badge');
+      
+      cardEl.setAttribute('data-card-id', index + 1);
+      cardTitle.textContent = `Reservation #${index + 1}`;
+      
+      // Keep room badge if room is selected
+      const roomDropdown = cardEl.querySelector('.roomSingle');
+      if (!roomDropdown.value) {
+        roomBadge.style.display = 'none';
+      }
+    });
+    
+    updateAllRoomDropdowns();
+    updateRoomCounter();
+    updateGuestDistributionDisplay();
+  }
+
+  // Update checkout date minimum for individual reservation
+  function updateReservationCheckoutMinDate(card) {
+    const checkinInput = card.querySelector('.checkin');
+    const checkoutInput = card.querySelector('.checkout');
+    
+    if (checkinInput.value) {
+      // Set minimum checkout date to the day after checkin
+      const checkinDateObj = new Date(checkinInput.value);
+      checkinDateObj.setDate(checkinDateObj.getDate() + 1);
+      const minCheckoutDate = checkinDateObj.toISOString().split('T')[0];
+      
+      checkoutInput.min = minCheckoutDate;
+      
+      // If current checkout is before or equal to checkin, clear it
+      if (checkoutInput.value && checkoutInput.value <= checkinInput.value) {
+        checkoutInput.value = '';
+      }
+    } else {
+      // Remove min restriction if no checkin date
+      checkoutInput.removeAttribute('min');
+    }
+  }
+
+  // Update checkout date minimum based on checkin date
+  function updateCheckoutMinDate() {
+    const checkinDate = document.getElementById('checkin').value;
+    const checkoutInput = document.getElementById('checkout');
+    
+    if (checkinDate) {
+      // Set minimum checkout date to the day after checkin
+      const checkinDateObj = new Date(checkinDate);
+      checkinDateObj.setDate(checkinDateObj.getDate() + 1);
+      const minCheckoutDate = checkinDateObj.toISOString().split('T')[0];
+      
+      checkoutInput.min = minCheckoutDate;
+      
+      // If current checkout is before or equal to checkin, clear it
+      if (checkoutInput.value && checkoutInput.value <= checkinDate) {
+        checkoutInput.value = '';
+      }
+    } else {
+      // Remove min restriction if no checkin date
+      checkoutInput.removeAttribute('min');
+    }
+  }
+
+  // Check if dates are valid and guest capacity allows for new rooms, enable/disable assign room button
+  function validateDatesAndToggleButton() {
+    const checkin = document.getElementById('checkin').value;
+    const checkout = document.getElementById('checkout').value;
+    const assignBtn = document.getElementById('assignRoomBtn');
+    const dateRequirement = document.getElementById('dateRequirement');
+    
+    // First check if dates are valid
+    if (!checkin || !checkout || checkin >= checkout) {
+      assignBtn.disabled = true;
+      if (!checkin || !checkout) {
+        dateRequirement.textContent = 'Please select check-in and check-out dates to assign rooms';
+      } else {
+        dateRequirement.textContent = 'Check-out date must be after check-in date';
+      }
+      dateRequirement.style.display = 'block';
+      return;
+    }
+    
+    // Check if all guests are already assigned
+    const totalAdults = parseInt(document.getElementById('adults').value) || 0;
+    const totalChildren = parseInt(document.getElementById('children').value) || 0;
+    const totalCards = accordionContainer.children.length;
+    
+    // If no cards exist, always enable the button (as long as dates are valid)
+    if (totalCards === 0) {
+      assignBtn.disabled = false;
+      dateRequirement.style.display = 'none';
+      return;
+    }
+    
+    // Calculate assigned guests
+    let assignedAdults = 0;
+    let assignedChildren = 0;
+    
+    Array.from(accordionContainer.querySelectorAll('.reservation-card')).forEach(card => {
+      // Use field-input values (the actual input fields) instead of display inputs
+      const adultsInput = card.querySelector('.field-input.adults');
+      const childrenInput = card.querySelector('.field-input.children');
+      
+      assignedAdults += parseInt(adultsInput.value) || 0;
+      assignedChildren += parseInt(childrenInput.value) || 0;
+    });
+    
+    // If all guests are assigned, disable button
+    if (assignedAdults >= totalAdults && assignedChildren >= totalChildren && (totalAdults > 0 || totalChildren > 0)) {
+      assignBtn.disabled = true;
+      dateRequirement.textContent = 'All guests have been assigned to rooms';
+      dateRequirement.style.display = 'block';
+    } else {
+      assignBtn.disabled = false;
+      dateRequirement.style.display = 'none';
+    }
+  }
+
+  // Update guest distribution display
+  function updateGuestDistributionDisplay() {
+    // Always use main form values (which represent total guests across all reservations)
+    const totalAdults = parseInt(document.getElementById('adults').value) || 0;
+    const totalChildren = parseInt(document.getElementById('children').value) || 0;
+    
+    const distributionElement = document.getElementById('guestDistribution');
+    
+
+    
+    if (accordionContainer.children.length === 0) {
+      distributionElement.style.display = 'none';
+      // IMPORTANT: Still call validation when no cards exist
+      validateDatesAndToggleButton();
+      updateSubmitButtonState();
+      return;
+    }
+    
+    // Calculate assigned guests
+    let assignedAdults = 0;
+    let assignedChildren = 0;
+    
+    Array.from(accordionContainer.querySelectorAll('.reservation-card')).forEach(card => {
+      // Get the actual input values from the field inputs (not display values)
+      const adultsInput = card.querySelector('.field-input.adults');
+      const childrenInput = card.querySelector('.field-input.children');
+      
+      const cardAdults = parseInt(adultsInput.value) || 0;
+      const cardChildren = parseInt(childrenInput.value) || 0;
+      
+      assignedAdults += cardAdults;
+      assignedChildren += cardChildren;
+    });
+    
+    const remainingAdults = totalAdults - assignedAdults;
+    const remainingChildren = totalChildren - assignedChildren;
+    
+    let message = `Assigned: ${assignedAdults}/${totalAdults} adults, ${assignedChildren}/${totalChildren} children`;
+    
+    if (remainingAdults > 0 || remainingChildren > 0) {
+      message += ` • Remaining: ${remainingAdults} adults, ${remainingChildren} children`;
+      distributionElement.style.color = '#f39c12'; // Orange for incomplete
+    } else if (remainingAdults < 0 || remainingChildren < 0) {
+      message += ` • ⚠️ Over-assigned!`;
+      distributionElement.style.color = '#e74c3c'; // Red for error
+    } else {
+      distributionElement.style.color = '#27ae60'; // Green for complete
+    }
+    
+    distributionElement.textContent = message;
+    distributionElement.style.display = 'block';
+    
+    // Update assign room button validation
+    validateDatesAndToggleButton();
+    // Update submit button validation
+    updateSubmitButtonState();
+  }
+
+  // Update submit button state based on room assignments and guest distribution
+  function updateSubmitButtonState() {
+    const submitBtn = document.getElementById('submitBtn');
+    const allRoomDropdowns = Array.from(accordionContainer.querySelectorAll('.roomSingle'));
+    const assignedRooms = allRoomDropdowns
+      .map(dropdown => dropdown.value)
+      .filter(value => value);
+    
+    const totalAccordions = accordionContainer.children.length;
+    
+    // Check if all guests are assigned
+    const totalAdults = parseInt(document.getElementById('adults').value) || 0;
+    const totalChildren = parseInt(document.getElementById('children').value) || 0;
+    
+    let assignedAdults = 0;
+    let assignedChildren = 0;
+    
+    Array.from(accordionContainer.querySelectorAll('.reservation-card')).forEach(card => {
+      // Use field-input values (the actual input fields) instead of display inputs
+      const adultsInput = card.querySelector('.field-input.adults');
+      const childrenInput = card.querySelector('.field-input.children');
+      
+      assignedAdults += parseInt(adultsInput.value) || 0;
+      assignedChildren += parseInt(childrenInput.value) || 0;
+    });
+    
+    const allGuestsAssigned = (assignedAdults >= totalAdults) && (assignedChildren >= totalChildren);
+    
+    // Enable submit only if:
+    // 1. There are rooms 
+    // 2. All rooms have been assigned
+    // 3. All guests have been assigned
+    if (totalAccordions > 0 && assignedRooms.length === totalAccordions && allGuestsAssigned) {
+      submitBtn.disabled = false;
+    } else {
+      submitBtn.disabled = true;
+    }
+  }
+
+  // Update room counter display
+  function updateRoomCounter() {
+    const counter = document.getElementById('roomCounter');
+    const assignedRooms = Array.from(accordionContainer.querySelectorAll('.roomSingle'))
+      .map(dropdown => dropdown.value)
+      .filter(value => value);
+    
+    const totalAccordions = accordionContainer.children.length;
+    
+    if (totalAccordions === 0) {
+      counter.textContent = 'No rooms assigned';
+      counter.style.color = '#666';
+    } else if (assignedRooms.length === 0) {
+      counter.textContent = `${totalAccordions} room${totalAccordions > 1 ? 's' : ''} pending selection`;
+      counter.style.color = '#f39c12';
+    } else if (assignedRooms.length < totalAccordions) {
+      counter.textContent = `${assignedRooms.length} of ${totalAccordions} rooms assigned`;
+      counter.style.color = '#f39c12';
+    } else {
+      counter.textContent = `${assignedRooms.length} room${assignedRooms.length > 1 ? 's' : ''} assigned`;
+      counter.style.color = '#27ae60';
+    }
+    
+    // Update submit button state
+    updateSubmitButtonState();
+  }
+
+  // Function to update all room dropdowns across all accordions
+  function updateAllRoomDropdowns() {
+    const allRoomDropdowns = Array.from(accordionContainer.querySelectorAll('.roomSingle'));
+    
+    // Get all currently selected rooms
+    const allSelectedRooms = allRoomDropdowns.map(dropdown => dropdown.value).filter(v => v);
+    
+    allRoomDropdowns.forEach((dropdown, index) => {
+      const currentSelection = dropdown.value;
+      
+      // Get rooms selected in OTHER accordions (excluding this one)
+      const otherSelectedRooms = allSelectedRooms.filter(room => room !== currentSelection);
+      
+      // Clear and rebuild options
+      dropdown.innerHTML = '<option value="">-- Select a Room --</option>';
+      
+      let addedCount = 0;
+      // Add all rooms from main roomSelect that are not selected in other accordions
+      Array.from(roomSelect.options).forEach(opt => {
+        if (!otherSelectedRooms.includes(opt.value)) {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.value;
+          
+          // Select this option if it matches current selection
+          if (opt.value === currentSelection) {
+            option.selected = true;
+          }
+          
+          dropdown.appendChild(option);
+          addedCount++;
+        }
+      });
+    });
+  }
+
+  function loadRooms(list) {
+    if (!roomSelect) {
+      roomSelect = document.getElementById('roomSelect');
+    }
+    
+    roomSelect.innerHTML = '';
+    list.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r[0] + ' — ' + r[1];
+      opt.textContent = r[0] + ' — ' + r[1];
+      roomSelect.appendChild(opt);
+    });
+
+    // Update all existing room dropdowns with the new filtered list
+    updateAllRoomDropdowns();
+
+    // Load existing reservations in edit mode
+    if (data.reservations && Array.isArray(data.reservations) && data.reservations.length > 0 && !reservationsLoaded) {
+      reservationsLoaded = true; // Set flag to prevent duplicate loading
+      data.reservations.forEach((reservation, index) => {
+        addRoomAccordion();
+        
+        // Set the room in the last created accordion
+        const lastAccordion = accordionContainer.lastElementChild;
+        const roomDropdown = lastAccordion.querySelector('.roomSingle');
+        
+        // Set the room value
+        roomDropdown.value = reservation.room;
+        
+        // Update the field display and populate with existing data
+        const roomFieldValue = lastAccordion.querySelector('[data-field="room"] .field-value');
+        const roomBadge = lastAccordion.querySelector('.room-badge');
+        
+        roomFieldValue.textContent = reservation.room;
+        roomFieldValue.classList.remove('empty');
+        roomBadge.textContent = reservation.room.split(' — ')[0];
+        roomBadge.style.display = 'inline-block';
+        
+        // Populate all card fields with reservation-specific data
+        if (reservation.plan) {
+          const planInput = lastAccordion.querySelector('.plan');
+          const planValue = lastAccordion.querySelector('[data-field="plan"] .field-value');
+          planInput.value = reservation.plan;
+          planValue.textContent = reservation.plan;
+        }
+        
+        if (reservation.status) {
+          const statusInput = lastAccordion.querySelector('.status');
+          const statusValue = lastAccordion.querySelector('[data-field="status"] .field-value');
+          statusInput.value = reservation.status;
+          statusValue.textContent = reservation.status;
+        }
+        
+        if (reservation.guest) {
+          const guestInput = lastAccordion.querySelector('.guest');
+          const guestValue = lastAccordion.querySelector('[data-field="guest"] .field-value');
+          guestInput.value = reservation.guest;
+          guestValue.textContent = reservation.guest;
+        }
+        
+        if (reservation.checkin) {
+          const checkinInput = lastAccordion.querySelector('.checkin');
+          const checkinValue = lastAccordion.querySelector('[data-field="checkin"] .field-value');
+          checkinInput.value = reservation.checkin;
+          checkinValue.textContent = reservation.checkin;
+        }
+        
+        if (reservation.checkout) {
+          const checkoutInput = lastAccordion.querySelector('.checkout');
+          const checkoutValue = lastAccordion.querySelector('[data-field="checkout"] .field-value');
+          checkoutInput.value = reservation.checkout;
+          checkoutValue.textContent = reservation.checkout;
+        }
+        
+        // Use reservation-specific adults and children counts
+        const adultsInput = lastAccordion.querySelector('.adults');
+        const adultsValue = lastAccordion.querySelector('[data-field="adults"] .field-value');
+        const childrenInput = lastAccordion.querySelector('.children');
+        const childrenValue = lastAccordion.querySelector('[data-field="children"] .field-value');
+        
+        adultsInput.value = reservation.adults || 0;
+        adultsValue.textContent = reservation.adults || 0;
+        childrenInput.value = reservation.children || 0;
+        childrenValue.textContent = reservation.children || 0;
+        
+        if (reservation.rate) {
+          const rateInput = lastAccordion.querySelector('.rate');
+          const rateValue = lastAccordion.querySelector('[data-field="rate"] .field-value');
+          rateInput.value = reservation.rate;
+          rateValue.textContent = reservation.rate;
+        }
+        
+        if (reservation.address) {
+          const addressInput = lastAccordion.querySelector('.address');
+          const addressValue = lastAccordion.querySelector('[data-field="address"] .field-value');
+          addressInput.value = reservation.address;
+          addressValue.textContent = reservation.address;
+        }
+        
+        if (reservation.notes) {
+          const notesInput = lastAccordion.querySelector('.notes');
+          const notesValue = lastAccordion.querySelector('[data-field="notes"] .field-value');
+          notesInput.value = reservation.notes;
+          notesValue.textContent = reservation.notes;
+        }
+      });
+      
+      updateAllRoomDropdowns();
+      updateRoomCounter();
+      // Add delay to ensure all card inputs are properly populated before calculating distribution
+      setTimeout(() => {
+        updateGuestDistributionDisplay();
+      }, 200);
+    } else if (data.rooms && Array.isArray(data.rooms) && data.rooms.length > 0 && !reservationsLoaded) {
+      // Fallback for old data format
+      reservationsLoaded = true; // Set flag to prevent duplicate loading
+      data.rooms.forEach((room, index) => {
+        addRoomAccordion();
+        
+        // Set the room in the last created accordion
+        const lastAccordion = accordionContainer.lastElementChild;
+        const roomDropdown = lastAccordion.querySelector('.roomSingle');
+        
+        // Set the room value
+        roomDropdown.value = room;
+        
+        // Update the field display and populate with existing data
+        const roomFieldValue = lastAccordion.querySelector('[data-field="room"] .field-value');
+        const roomBadge = lastAccordion.querySelector('.room-badge');
+        
+        roomFieldValue.textContent = room;
+        roomFieldValue.classList.remove('empty');
+        roomBadge.textContent = room.split(' — ')[0];
+        roomBadge.style.display = 'inline-block';
+        
+        // Use shared data for backwards compatibility
+        const sharedData = {
+          plan: data.plan,
+          status: data.status,
+          guest: data.guest,
+          checkin: data.checkin,
+          checkout: data.checkout,
+          rate: data.rate,
+          address: data.address,
+          notes: data.notes
+        };
+        
+        Object.keys(sharedData).forEach(field => {
+          if (sharedData[field]) {
+            const input = lastAccordion.querySelector(`.${field}`);
+            const value = lastAccordion.querySelector(`[data-field="${field}"] .field-value`);
+            if (input && value) {
+              input.value = sharedData[field];
+              value.textContent = sharedData[field];
+            }
+          }
+        });
+        
+        // For adults/children, distribute evenly across rooms, with remainder in first room
+        const totalAdults = data.adults || 0;
+        const totalChildren = data.children || 0;
+        const numRooms = data.rooms.length;
+        
+        const adultsPerRoom = Math.floor(totalAdults / numRooms);
+        const adultsRemainder = totalAdults % numRooms;
+        const childrenPerRoom = Math.floor(totalChildren / numRooms);
+        const childrenRemainder = totalChildren % numRooms;
+        
+        const cardAdults = adultsPerRoom + (index < adultsRemainder ? 1 : 0);
+        const cardChildren = childrenPerRoom + (index < childrenRemainder ? 1 : 0);
+        
+        const adultsInput = lastAccordion.querySelector('.adults');
+        const adultsValue = lastAccordion.querySelector('[data-field="adults"] .field-value');
+        const childrenInput = lastAccordion.querySelector('.children');
+        const childrenValue = lastAccordion.querySelector('[data-field="children"] .field-value');
+        
+        adultsInput.value = cardAdults;
+        adultsValue.textContent = cardAdults;
+        childrenInput.value = cardChildren;
+        childrenValue.textContent = cardChildren;
+      });
+      
+      updateAllRoomDropdowns();
+      updateRoomCounter();
+      // Add delay to ensure all card inputs are properly populated before calculating distribution
+      setTimeout(() => {
+        updateGuestDistributionDisplay();
+      }, 200);
+    }
+  }
+
+  function reloadRooms() {
+    const checkin = document.getElementById('checkin').value;
+    const checkout = document.getElementById('checkout').value;
+    
+    if (!checkin || !checkout) {
+      return;
+    }
+    
+    if (!roomSelect) {
+      roomSelect = document.getElementById('roomSelect');
+    }
+    
+    const bookingGroupId = document.getElementById('bookingGroupId').value || null;
+    google.script.run.withSuccessHandler(loadRooms).getRoomsList(checkin, checkout, bookingGroupId);
+  }
+
+  window.onload = function() {
+    // Initialize main booking form from template
+    const mainBookingForm = document.getElementById('mainBookingForm');
+    mainBookingForm.innerHTML = FormTemplates.bookingForm;
+    
+    // Now that the form is created, get the roomSelect element
+    roomSelect = document.getElementById('roomSelect');
+    
+    // Setup form mode after DOM is ready
+    setupFormMode();
+    
+    // Add event listeners after form is created and elements are available
+    document.getElementById('checkin').addEventListener('change', function() {
+      updateCheckoutMinDate();
+      reloadRooms();
+      validateDatesAndToggleButton();
+    });
+    document.getElementById('checkout').addEventListener('change', function() {
+      reloadRooms();
+      validateDatesAndToggleButton();
+    });
+    
+    // Add event listeners for guest count changes - use 'input' for immediate response
+    document.getElementById('adults').addEventListener('input', updateGuestDistributionDisplay);
+    document.getElementById('children').addEventListener('input', updateGuestDistributionDisplay);
+    
+    // Load initial rooms if we have them
+    if (roomList && roomList.length) {
+      loadRooms(roomList);
+    }
+    
+    if (!data) return;
+    
+    // Populate form fields FIRST before loading rooms
+    document.getElementById('guest').value = data.guest || '';
+    document.getElementById('phone').value = data.phone || '';
+    document.getElementById('address').value = data.address || '';
+    document.getElementById('checkin').value = data.checkin || '';
+    document.getElementById('checkout').value = data.checkout || '';
+    document.getElementById('adults').value = data.adults || 1;
+    document.getElementById('children').value = data.children || 0;
+    document.getElementById('status').value = data.status || 'Confirmed';
+    document.getElementById('source').value = data.source || 'MMT';
+    document.getElementById('plan').value = data.plan || 'EP';
+    document.getElementById('rate').value = data.rate || '';
+    document.getElementById('notes').value = data.notes || '';
+    
+    // Set booking group ID if editing
+    if (data.bookingGroupId) {
+      document.getElementById('bookingGroupId').value = data.bookingGroupId;
+    }
+
+    // Load rooms AFTER main form is populated
+    if (data.checkin && data.checkout) reloadRooms();
+    else if (data.rooms && data.rooms.length) loadRooms(data.rooms.map(r => [r, '']));
+    
+    // Initial validation of dates to set button state
+    validateDatesAndToggleButton();
+    
+    // Set initial checkout min date if checkin is already populated
+    updateCheckoutMinDate();
+    
+    // Set initial submit button state
+    updateSubmitButtonState();
+  };
+
+  function submitBooking() {
+    const allCards = Array.from(accordionContainer.children);
+    
+    if (allCards.length === 0) {
+      alert('Please assign at least one room');
+      return;
+    }
+    
+    const reservations = [];
+    let hasUnassignedRooms = false;
+    
+    allCards.forEach((card, idx) => {
+      const roomValue = card.querySelector('.roomSingle').value;
+      
+      if (!roomValue) {
+        hasUnassignedRooms = true;
+        return;
+      }
+      
+      reservations.push({
+        bookingGroupId: document.getElementById('bookingGroupId').value || null,
+        room: roomValue,
+        guest: card.querySelector('.guest').value,
+        phone: document.getElementById('phone').value,
+        address: card.querySelector('.address').value,
+        checkin: card.querySelector('.checkin').value || document.getElementById('checkin').value,
+        checkout: card.querySelector('.checkout').value || document.getElementById('checkout').value,
+        adults: parseInt(card.querySelector('.adults').value) || 0,
+        children: parseInt(card.querySelector('.children').value) || 0,
+        plan: card.querySelector('.plan').value,
+        rate: parseFloat(card.querySelector('.rate').value) || 0,
+        source: document.getElementById('source').value,
+        status: card.querySelector('.status').value,
+        notes: card.querySelector('.notes').value
+      });
+    });
+    
+    if (hasUnassignedRooms) {
+      alert('Please select rooms for all assignments or remove unassigned room forms');
+      return;
+    }
+    
+    if (reservations.length === 0) {
+      alert('Please assign and select at least one room');
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(() => google.script.host.close())
+      .saveMultipleReservations(reservations);
+  }
+</script>
+</body>
+</html>
