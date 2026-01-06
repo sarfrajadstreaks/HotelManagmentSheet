@@ -15,19 +15,19 @@ function onOpen() {
 
 // ======= TRIGGER FUNCTIONS =======
 // Triggered when ReservationCalendar!B1 changes or Reservations sheet changes
-function onEdit(e) {
-  const range = e.range;
-  const sheetName = range.getSheet().getName();
+// function onEdit(e) {
+//   const range = e.range;
+//   const sheetName = range.getSheet().getName();
 
-  // Refresh calendar if date changes
-  if (sheetName === "ReservationCalendar" && range.getA1Notation() === "B1") {
-    generateReservationCalendar();
-  }
-  // Refresh calendar if Reservations sheet changes
-  if (sheetName === "Reservations") {
-    generateReservationCalendar();
-  }
-}
+//   // Refresh calendar if date changes
+//   if (sheetName === "ReservationCalendar" && range.getA1Notation() === "B1") {
+//     generateReservationCalendar();
+//   }
+//   // Refresh calendar if Reservations sheet changes
+//   if (sheetName === "Reservations") {
+//     generateReservationCalendar();
+//   }
+// }
 
 // ======= DELETE RESERVATION =======
 function deleteSelectedReservation() {
@@ -110,4 +110,21 @@ function openRateInputModal() {
     .setHeight(300);
 
   SpreadsheetApp.getUi().showModalDialog(html, "Update Rates");
+}
+
+function testInstallableTrigger(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const range = e.range;
+  
+  // Get the email of the person whose authority the script is using
+  const effectiveUser = Session.getEffectiveUser().getEmail();
+  
+  // Get the email of the person actually typing (will be blank if they aren't in your organization)
+  const activeUser = Session.getActiveUser().getEmail();
+
+  const statusMessage = `Trigger owner: ${effectiveUser} | Last edit by: ${activeUser || "Anonymous/External"}`;
+  
+  // Post the result to your Log (or a specific cell for visibility)
+  console.log(statusMessage);
+  sheet.getRange("A1").setValue(statusMessage); 
 }
